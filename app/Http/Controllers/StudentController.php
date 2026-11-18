@@ -8,6 +8,21 @@ use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
+    private function rules(?Student $student = null): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('students', 'email')->ignore($student?->id),
+            ],
+            'phone' => 'required|string|max:30',
+            'address' => 'nullable|string',
+            'date_of_birth' => 'nullable|date',
+        ];
+    }
+
     public function index()
     {
         $students = Student::latest()->paginate(10);
@@ -22,13 +37,7 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students,email',
-            'phone' => 'required|string|max:30',
-            'address' => 'nullable|string',
-            'date_of_birth' => 'nullable|date',
-        ]);
+        $validated = $request->validate($this->rules());
 
         Student::create($validated);
 
@@ -48,17 +57,7 @@ class StudentController extends Controller
 
     public function update(Request $request, Student $student)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('students', 'email')->ignore($student->id),
-            ],
-            'phone' => 'required|string|max:30',
-            'address' => 'nullable|string',
-            'date_of_birth' => 'nullable|date',
-        ]);
+        $validated = $request->validate($this->rules($student));
 
         $student->update($validated);
 
